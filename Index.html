@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0f172a" />
+  <title>Terminplaner</title>
+  <style>
+    :root{
+      --bg:#f3f4f6;
+      --card:#fff;
+      --text:#111827;
+      --muted:#6b7280;
+      --line:#d1d5db;
+      --primary:#0f172a;
+      --danger:#b91c1c;
+      --shadow:0 8px 24px rgba(15,23,42,.08);
+      --radius:16px;
+    }
+    *{box-sizing:border-box}
+    html{-webkit-text-size-adjust:100%}
+    body{
+      margin:0;
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+      background:var(--bg);
+      color:var(--text);
+    }
+    button,input,textarea{font:inherit}
+    .app{
+      width:min(780px,100%);
+      margin:0 auto;
+      padding:16px 12px 40px;
+    }
+    .topbar{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:12px;
+      margin:4px 2px 16px;
+    }
+    h1{
+      margin:0;
+      font-size:26px;
+      line-height:1.15;
+      letter-spacing:-.02em;
+    }
+    .sub{
+      margin-top:4px;
+      color:var(--muted);
+      font-size:13px;
+    }
+    .card{
+      background:var(--card);
+      border:1px solid #e5e7eb;
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:15px;
+      margin-bottom:13px;
+    }
+    .section-head{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      margin-bottom:10px;
+    }
+    .fixed-title{
+      font-weight:800;
+      font-size:17px;
+    }
+    .plus{
+      border:0;
+      background:#e8edf3;
+      color:var(--primary);
+      width:42px;
+      height:42px;
+      border-radius:12px;
+      font-size:27px;
+      line-height:42px;
+      padding:0;
+      cursor:pointer;
+    }
+    .primary,.secondary,.danger,.ghost{
+      border:0;
+      border-radius:12px;
+      min-height:45px;
+      padding:0 14px;
+      font-weight:800;
+      cursor:pointer;
+    }
+    .primary{background:var(--primary);color:#fff}
+    .secondary{background:#e5e7eb;color:var(--text)}
+    .danger{background:#fee2e2;color:var(--danger)}
+    .ghost{background:transparent;color:var(--primary);border:1px solid #cbd5e1}
+    input,textarea{
+      width:100%;
+      border:1px solid var(--line);
+      border-radius:12px;
+      padding:12px 13px;
+      background:#fff;
+      color:var(--text);
+      outline:none;
+      font-size:16px;
+    }
+    textarea{min-height:90px;resize:vertical;line-height:1.4}
+    input:focus,textarea:focus{
+      border-color:#64748b;
+      box-shadow:0 0 0 3px rgba(100,116,139,.14);
+    }
+    label{
+      display:block;
+      font-size:12px;
+      font-weight:700;
+      color:var(--muted);
+      margin:11px 0 6px;
+    }
+    .list{display:flex;flex-direction:column;gap:8px}
+    .list-row{
+      display:grid;
+      grid-template-columns:1fr 42px;
+      gap:8px;
+      align-items:center;
+    }
+    .contact-row{
+      display:grid;
+      grid-template-columns:1fr 1fr 42px;
+      gap:8px;
+      align-items:center;
+    }
+    .remove{
+      border:0;
+      border-radius:12px;
+      background:#fee2e2;
+      color:var(--danger);
+      width:42px;
+      height:42px;
+      font-size:23px;
+      cursor:pointer;
+    }
+    .hint{font-size:12px;color:var(--muted);margin-top:8px}
+    .editor-actions{
+      position:sticky;
+      bottom:0;
+      z-index:20;
+      display:grid;
+      grid-template-columns:1fr 1.5fr;
+      gap:10px;
+      padding:12px 0 calc(10px + env(safe-area-inset-bottom));
+      background:linear-gradient(to top,var(--bg) 72%,rgba(243,244,246,0));
+    }
+    .report-list{display:flex;flex-direction:column;gap:10px}
+    .report-item{
+      background:#fff;
+      border:1px solid #e5e7eb;
+      border-radius:15px;
+      box-shadow:var(--shadow);
+      padding:14px;
+    }
+    .report-title{
+      font-size:17px;
+      font-weight:800;
+      margin-bottom:5px;
+      word-break:break-word;
+    }
+    .report-meta{
+      color:var(--muted);
+      font-size:12px;
+      margin-bottom:12px;
+    }
+    .report-actions{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:8px;
+    }
+    .empty{
+      text-align:center;
+      color:var(--muted);
+      padding:34px 18px;
+    }
+    .hidden{display:none!important}
+    .toast{
+      position:fixed;
+      left:50%;
+      bottom:24px;
+      transform:translateX(-50%) translateY(18px);
+      opacity:0;
+      pointer-events:none;
+      background:#111827;
+      color:#fff;
+      border-radius:999px;
+      padding:10px 16px;
+      transition:.2s;
+      z-index:100;
+      white-space:nowrap;
+      font-size:14px;
+    }
+    .toast.show{
+      opacity:1;
+      transform:translateX(-50%) translateY(0);
+    }
+    .editor-top{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      margin-bottom:14px;
+    }
+    .editor-top .ghost{min-height:40px;padding:0 12px}
+    .small-actions{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:8px;
+      margin-top:8px;
+    }
+    @media(max-width:560px){
+      .contact-row{grid-template-columns:1fr 42px}
+      .contact-row input:nth-child(2){grid-column:1}
+      .contact-row .remove{grid-column:2;grid-row:1 / span 2;height:92px}
+      .editor-actions{grid-template-columns:1fr}
+      .report-actions{grid-template-columns:1fr}
+      .small-actions{grid-template-columns:1fr}
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+
+    <!-- Übersicht -->
+    <section id="homeView">
+      <div class="topbar">
+        <div>
+          <h1>Terminplaner</h1>
+          <div class="sub">Mehrere Berichte auf diesem Gerät speichern</div>
+        </div>
+        <button id="newReportBtn" class="plus" type="button" aria-label="Neuen Termin anlegen">+</button>
+      </div>
+
+      <div id="reportList" class="report-list"></div>
+      <div id="emptyState" class="card empty">
+        Noch keine Termine vorhanden.<br><br>
+        Tippe rechts oben auf <strong>+</strong>.
+      </div>
+    </section>
+
+    <!-- Editor -->
+    <section id="editorView" class="hidden">
+      <div class="editor-top">
+        <button id="backBtn" class="ghost" type="button">← Übersicht</button>
+        <button id="deleteReportBtn" class="danger" type="button">Termin löschen</button>
+      </div>
+
+      <section class="card">
+        <div class="section-head"><div class="fixed-title">*Termin:*</div></div>
+        <textarea id="termin" placeholder="z. B. BMW Werk Irlbach"></textarea>
+      </section>
+
+      <section class="card map-section" data-key="lotsenpunkt">
+        <div class="section-head"><div class="fixed-title">*Lotsenpunkt:*</div></div>
+        <label>Google-Maps-Punkt</label>
+        <input class="map-url" type="url" inputmode="url" placeholder="https://maps.app.goo.gl/…" />
+        <label>Kommentar</label>
+        <textarea class="map-comment" placeholder="Zusätzliche Hinweise …"></textarea>
+      </section>
+
+      <section class="card map-section" data-key="ausstieg">
+        <div class="section-head"><div class="fixed-title">*Ausstieg:*</div></div>
+        <label>Google-Maps-Punkt</label>
+        <input class="map-url" type="url" inputmode="url" placeholder="https://maps.app.goo.gl/…" />
+        <label>Kommentar</label>
+        <textarea class="map-comment" placeholder="Zusätzliche Hinweise …"></textarea>
+      </section>
+
+      <section class="card">
+        <div class="section-head"><div class="fixed-title">*Ablauf:*</div></div>
+        <textarea id="ablauf" placeholder="Ablauf eintragen …"></textarea>
+      </section>
+
+      <section class="card map-section" data-key="abfahrt">
+        <div class="section-head"><div class="fixed-title">*Abfahrt:*</div></div>
+        <label>Google-Maps-Punkt</label>
+        <input class="map-url" type="url" inputmode="url" placeholder="https://maps.app.goo.gl/…" />
+        <label>Kommentar</label>
+        <textarea class="map-comment" placeholder="Zusätzliche Hinweise …"></textarea>
+      </section>
+
+      <section class="card">
+        <div class="section-head">
+          <div class="fixed-title">*Sicherheit:*</div>
+          <button id="addSecurity" class="plus" type="button" aria-label="Sicherheitspunkt hinzufügen">+</button>
+        </div>
+        <div id="securityList" class="list"></div>
+      </section>
+
+      <section class="card map-section" data-key="evak">
+        <div class="section-head"><div class="fixed-title">*EVAK:*</div></div>
+        <label>Google-Maps-Punkt</label>
+        <input class="map-url" type="url" inputmode="url" placeholder="https://maps.app.goo.gl/…" />
+        <label>Kommentar</label>
+        <textarea class="map-comment" placeholder="Zusätzliche Hinweise …"></textarea>
+      </section>
+
+      <section class="card">
+        <div class="section-head">
+          <div class="fixed-title">*Sonstiges:*</div>
+          <button id="addOther" class="plus" type="button" aria-label="Sonstigen Punkt hinzufügen">+</button>
+        </div>
+        <div id="otherList" class="list"></div>
+      </section>
+
+      <section class="card">
+        <div class="section-head">
+          <div class="fixed-title">*Ansprechpartner:*</div>
+          <button id="addContact" class="plus" type="button" aria-label="Ansprechpartner hinzufügen">+</button>
+        </div>
+        <div id="contactList" class="list"></div>
+      </section>
+
+      <div class="editor-actions">
+        <button id="saveBackBtn" class="secondary" type="button">Speichern & Übersicht</button>
+        <button id="shareBtn" class="primary" type="button">In App teilen</button>
+      </div>
+    </section>
+
+  </main>
+
+  <div id="toast" class="toast">Gespeichert</div>
+
+<script>
+(() => {
+  const STORAGE_KEY = "terminplaner_multi_v1";
+  const $ = (s, r=document) => r.querySelector(s);
+  const $$ = (s, r=document) => [...r.querySelectorAll(s)];
+
+  let reports = loadReports();
+  let currentId = null;
+  let saveTimer = null;
+
+  function uid(){
+    return "r_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2,8);
+  }
+
+  function blankReport(){
+    return {
+      id: uid(),
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+      termin: "",
+      lotsenpunkt: {url:"", comment:""},
+      ausstieg: {url:"", comment:""},
+      ablauf: "",
+      abfahrt: {url:"", comment:""},
+      sicherheit: [""],
+      evak: {url:"", comment:""},
+      sonstiges: [""],
+      ansprechpartner: [{name:"", phone:""}]
+    };
+  }
+
+  function loadReports(){
+    try{
+      const x = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+      return Array.isArray(x) ? x : [];
+    }catch(e){ return []; }
+  }
+
+  function persist(){
+    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(reports)); }catch(e){}
+  }
+
+  function esc(s=""){
+    return String(s)
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;");
+  }
+
+  function reportName(r){
+    const first = (r.termin || "").split(/\r?\n/).map(x=>x.trim()).find(Boolean);
+    return first || "Unbenannter Termin";
+  }
+
+  function fmtDate(ts){
+    try{
+      return new Intl.DateTimeFormat("de-DE", {
+        day:"2-digit", month:"2-digit", year:"numeric",
+        hour:"2-digit", minute:"2-digit"
+      }).format(new Date(ts));
+    }catch(e){ return ""; }
+  }
+
+  function renderHome(){
+    const list = $("#reportList");
+    list.innerHTML = "";
+
+    const sorted = [...reports].sort((a,b)=>b.updatedAt-a.updatedAt);
+    $("#emptyState").classList.toggle("hidden", sorted.length > 0);
+
+    sorted.forEach(r => {
+      const item = document.createElement("div");
+      item.className = "report-item";
+      item.innerHTML = `
+        <div class="report-title">${esc(reportName(r))}</div>
+        <div class="report-meta">Zuletzt geändert: ${esc(fmtDate(r.updatedAt))}</div>
+        <div class="report-actions">
+          <button class="primary open-btn" type="button">Öffnen</button>
+          <button class="secondary share-list-btn" type="button">In App teilen</button>
+        </div>
+      `;
+      $(".open-btn", item).addEventListener("click", () => openReport(r.id));
+      $(".share-list-btn", item).addEventListener("click", () => shareReport(r));
+      list.appendChild(item);
+    });
+  }
+
+  function showHome(){
+    saveCurrent(true);
+    $("#editorView").classList.add("hidden");
+    $("#homeView").classList.remove("hidden");
+    currentId = null;
+    renderHome();
+    window.scrollTo({top:0, behavior:"smooth"});
+  }
+
+  function showEditor(){
+    $("#homeView").classList.add("hidden");
+    $("#editorView").classList.remove("hidden");
+    window.scrollTo({top:0, behavior:"smooth"});
+  }
+
+  function newReport(){
+    const r = blankReport();
+    reports.unshift(r);
+    persist();
+    openReport(r.id);
+  }
+
+  function openReport(id){
+    const r = reports.find(x=>x.id===id);
+    if(!r) return;
+    currentId = id;
+    fillForm(r);
+    showEditor();
+  }
+
+  function fillForm(r){
+    $("#termin").value = r.termin || "";
+    $("#ablauf").value = r.ablauf || "";
+    setMap("lotsenpunkt", r.lotsenpunkt);
+    setMap("ausstieg", r.ausstieg);
+    setMap("abfahrt", r.abfahrt);
+    setMap("evak", r.evak);
+
+    $("#securityList").innerHTML = "";
+    (r.sicherheit?.length ? r.sicherheit : [""]).forEach(v => addListRow("#securityList", v));
+
+    $("#otherList").innerHTML = "";
+    (r.sonstiges?.length ? r.sonstiges : [""]).forEach(v => addListRow("#otherList", v));
+
+    $("#contactList").innerHTML = "";
+    (r.ansprechpartner?.length ? r.ansprechpartner : [{name:"",phone:""}])
+      .forEach(c => addContactRow(c.name, c.phone));
+  }
+
+  function setMap(key, data={}){
+    const sec = $(`.map-section[data-key="${key}"]`);
+    $(".map-url", sec).value = data?.url || "";
+    $(".map-comment", sec).value = data?.comment || "";
+  }
+
+  function getMap(key){
+    const sec = $(`.map-section[data-key="${key}"]`);
+    return {
+      url:$(".map-url", sec).value.trim(),
+      comment:$(".map-comment", sec).value.trim()
+    };
+  }
+
+  function addListRow(containerSel, value=""){
+    const row = document.createElement("div");
+    row.className = "list-row";
+    row.innerHTML = `
+      <input class="list-input" type="text" placeholder="Punkt eintragen …" value="${esc(value)}">
+      <button class="remove" type="button" aria-label="Eintrag löschen">−</button>
+    `;
+    $(".remove", row).addEventListener("click", () => {
+      row.remove();
+      queueSave();
+    });
+    $(".list-input", row).addEventListener("input", queueSave);
+    $(containerSel).appendChild(row);
+  }
+
+  function addContactRow(name="", phone=""){
+    const row = document.createElement("div");
+    row.className = "contact-row";
+    row.innerHTML = `
+      <input class="contact-name" type="text" placeholder="Name / Funktion" value="${esc(name)}">
+      <input class="contact-phone" type="tel" inputmode="tel" placeholder="Telefonnummer" value="${esc(phone)}">
+      <button class="remove" type="button" aria-label="Ansprechpartner löschen">−</button>
+    `;
+    $(".remove", row).addEventListener("click", () => {
+      row.remove();
+      queueSave();
+    });
+    $$(".contact-name,.contact-phone", row).forEach(el=>el.addEventListener("input", queueSave));
+    $("#contactList").appendChild(row);
+  }
+
+  function formSnapshot(){
+    return {
+      termin: $("#termin").value,
+      lotsenpunkt: getMap("lotsenpunkt"),
+      ausstieg: getMap("ausstieg"),
+      ablauf: $("#ablauf").value,
+      abfahrt: getMap("abfahrt"),
+      sicherheit: $$("#securityList .list-input").map(x=>x.value.trim()),
+      evak: getMap("evak"),
+      sonstiges: $$("#otherList .list-input").map(x=>x.value.trim()),
+      ansprechpartner: $$("#contactList .contact-row").map(row=>({
+        name:$(".contact-name",row).value.trim(),
+        phone:$(".contact-phone",row).value.trim()
+      }))
+    };
+  }
+
+  function saveCurrent(silent=false){
+    if(!currentId) return;
+    const i = reports.findIndex(x=>x.id===currentId);
+    if(i<0) return;
+    const snap = formSnapshot();
+    reports[i] = {
+      ...reports[i],
+      ...snap,
+      updatedAt: Date.now()
+    };
+    persist();
+    if(!silent) toast("Gespeichert");
+  }
+
+  function queueSave(){
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(()=>saveCurrent(true), 250);
+  }
+
+  function cleanLines(text){
+    return String(text || "").trim();
+  }
+
+  function buildText(r){
+    const lines = [];
+    const sec = (title, body) => {
+      lines.push(`*${title}:*`);
+      if(body) lines.push(body);
+      lines.push("");
+    };
+    const mapSec = (title, obj={}) => {
+      lines.push(`*${title}:*`);
+      if(obj.url) lines.push(obj.url);
+      if(obj.comment) lines.push(obj.comment);
+      lines.push("");
+    };
+
+    sec("Termin", cleanLines(r.termin));
+    mapSec("Lotsenpunkt", r.lotsenpunkt);
+    mapSec("Ausstieg", r.ausstieg);
+    sec("Ablauf", cleanLines(r.ablauf));
+    mapSec("Abfahrt", r.abfahrt);
+
+    lines.push("*Sicherheit:*");
+    (r.sicherheit || []).map(x=>x.trim()).filter(Boolean).forEach(x=>lines.push(`- ${x}`));
+    lines.push("");
+
+    mapSec("EVAK", r.evak);
+
+    lines.push("*Sonstiges:*");
+    (r.sonstiges || []).map(x=>x.trim()).filter(Boolean).forEach(x=>lines.push(`- ${x}`));
+    lines.push("");
+
+    lines.push("*Ansprechpartner:*");
+    const contacts = (r.ansprechpartner || []).filter(c=>c.name || c.phone);
+    contacts.forEach((c,idx)=>{
+      if(c.name) lines.push(c.name);
+      if(c.phone) lines.push(c.phone);
+      if(idx < contacts.length-1) lines.push("");
+    });
+
+    return lines.join("\n").replace(/\n{3,}/g,"\n\n").trim();
+  }
+
+  async function shareText(text){
+    if(navigator.share){
+      try{
+        await navigator.share({title:"Terminbericht", text});
+        return true;
+      }catch(e){
+        if(e?.name === "AbortError") return false;
+      }
+    }
+
+    try{
+      await navigator.clipboard.writeText(text);
+      toast("Bericht kopiert – in Nachrichten-App einfügen");
+      return true;
+    }catch(e){
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      ta.remove();
+      toast("Bericht kopiert");
+      return true;
+    }
+  }
+
+  async function shareReport(r){
+    await shareText(buildText(r));
+  }
+
+  async function shareCurrent(){
+    saveCurrent(true);
+    const r = reports.find(x=>x.id===currentId);
+    if(r) await shareReport(r);
+  }
+
+  function toast(msg){
+    const el = $("#toast");
+    el.textContent = msg;
+    el.classList.add("show");
+    clearTimeout(toast._t);
+    toast._t = setTimeout(()=>el.classList.remove("show"), 1700);
+  }
+
+  function deleteCurrent(){
+    if(!currentId) return;
+    const r = reports.find(x=>x.id===currentId);
+    if(!confirm(`"${reportName(r)}" wirklich löschen?`)) return;
+    reports = reports.filter(x=>x.id!==currentId);
+    persist();
+    currentId = null;
+    $("#editorView").classList.add("hidden");
+    $("#homeView").classList.remove("hidden");
+    renderHome();
+    toast("Termin gelöscht");
+  }
+
+  $("#newReportBtn").addEventListener("click", newReport);
+  $("#backBtn").addEventListener("click", showHome);
+  $("#saveBackBtn").addEventListener("click", showHome);
+  $("#deleteReportBtn").addEventListener("click", deleteCurrent);
+  $("#shareBtn").addEventListener("click", shareCurrent);
+  $("#addSecurity").addEventListener("click", () => { addListRow("#securityList"); queueSave(); });
+  $("#addOther").addEventListener("click", () => { addListRow("#otherList"); queueSave(); });
+  $("#addContact").addEventListener("click", () => { addContactRow(); queueSave(); });
+
+  ["termin","ablauf"].forEach(id => $("#"+id).addEventListener("input", queueSave));
+  $$(".map-url,.map-comment").forEach(el=>el.addEventListener("input", queueSave));
+
+  window.addEventListener("beforeunload", ()=>saveCurrent(true));
+
+  renderHome();
+})();
+</script>
+</body>
+</html>
