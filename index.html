@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0f172a" />
+  <title>Terminplaner</title>
+  <style>
+    :root{
+      --bg:#f3f4f6;
+      --card:#ffffff;
+      --text:#111827;
+      --muted:#6b7280;
+      --line:#d1d5db;
+      --primary:#0f172a;
+      --primary-2:#1e293b;
+      --danger:#b91c1c;
+      --shadow:0 8px 24px rgba(15,23,42,.08);
+      --radius:16px;
+    }
+
+    *{box-sizing:border-box}
+    html{-webkit-text-size-adjust:100%}
+    body{
+      margin:0;
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+      background:var(--bg);
+      color:var(--text);
+    }
+
+    .app{
+      width:min(760px,100%);
+      margin:0 auto;
+      padding:18px 14px 42px;
+    }
+
+    .header{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      margin:4px 2px 18px;
+    }
+
+    h1{
+      font-size:26px;
+      line-height:1.15;
+      margin:0;
+      letter-spacing:-.02em;
+    }
+
+    .sub{
+      color:var(--muted);
+      font-size:13px;
+      margin-top:5px;
+    }
+
+    .card{
+      background:var(--card);
+      border:1px solid #e5e7eb;
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:16px;
+      margin-bottom:14px;
+    }
+
+    .section-head{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      margin-bottom:10px;
+    }
+
+    .fixed-title{
+      font-weight:800;
+      font-size:17px;
+      white-space:nowrap;
+    }
+
+    label{
+      display:block;
+      font-size:12px;
+      font-weight:700;
+      color:var(--muted);
+      margin:12px 0 6px;
+    }
+
+    input, textarea{
+      width:100%;
+      font:inherit;
+      font-size:16px;
+      color:var(--text);
+      background:#fff;
+      border:1px solid var(--line);
+      border-radius:12px;
+      padding:12px 13px;
+      outline:none;
+      transition:border-color .15s, box-shadow .15s;
+    }
+
+    textarea{
+      min-height:92px;
+      resize:vertical;
+      line-height:1.4;
+    }
+
+    input:focus, textarea:focus{
+      border-color:#64748b;
+      box-shadow:0 0 0 3px rgba(100,116,139,.14);
+    }
+
+    .map-row{
+      display:grid;
+      grid-template-columns:1fr;
+      gap:8px;
+    }
+
+    .list{
+      display:flex;
+      flex-direction:column;
+      gap:9px;
+    }
+
+    .list-row{
+      display:grid;
+      grid-template-columns:1fr 42px;
+      gap:8px;
+      align-items:center;
+    }
+
+    .contact-row{
+      display:grid;
+      grid-template-columns:1fr 1fr 42px;
+      gap:8px;
+      align-items:center;
+    }
+
+    .icon-btn, .plus-btn{
+      border:0;
+      border-radius:12px;
+      background:#eef2f7;
+      color:var(--primary);
+      width:42px;
+      height:42px;
+      font-size:25px;
+      line-height:42px;
+      text-align:center;
+      cursor:pointer;
+      font-weight:500;
+      padding:0;
+      flex:0 0 auto;
+    }
+
+    .icon-btn{
+      color:var(--danger);
+      font-size:22px;
+    }
+
+    .plus-btn:active, .icon-btn:active{
+      transform:scale(.96);
+    }
+
+    .hint{
+      color:var(--muted);
+      font-size:12px;
+      margin-top:8px;
+    }
+
+    .actions{
+      position:sticky;
+      bottom:0;
+      z-index:10;
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+      padding:12px 0 calc(10px + env(safe-area-inset-bottom));
+      background:linear-gradient(to top,var(--bg) 72%,rgba(243,244,246,0));
+    }
+
+    button.main{
+      min-height:48px;
+      border:0;
+      border-radius:13px;
+      padding:0 14px;
+      font-size:15px;
+      font-weight:800;
+      cursor:pointer;
+    }
+
+    .primary{
+      background:var(--primary);
+      color:#fff;
+    }
+
+    .secondary{
+      background:#e5e7eb;
+      color:var(--text);
+    }
+
+    .output-wrap{
+      display:none;
+      margin-top:18px;
+    }
+
+    .output-wrap.show{display:block}
+
+    .output{
+      min-height:320px;
+      white-space:pre-wrap;
+      font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+      font-size:14px;
+      line-height:1.5;
+    }
+
+    .output-actions{
+      display:grid;
+      grid-template-columns:1.5fr 1fr 1fr;
+      gap:10px;
+      margin-top:10px;
+    }
+
+    .toast{
+      position:fixed;
+      left:50%;
+      bottom:24px;
+      transform:translateX(-50%) translateY(20px);
+      opacity:0;
+      pointer-events:none;
+      background:#111827;
+      color:#fff;
+      border-radius:999px;
+      padding:10px 16px;
+      font-size:14px;
+      transition:.2s;
+      z-index:100;
+      white-space:nowrap;
+    }
+
+    .toast.show{
+      opacity:1;
+      transform:translateX(-50%) translateY(0);
+    }
+
+    @media (max-width:560px){
+      .app{padding-left:10px;padding-right:10px}
+      .card{padding:14px}
+      .contact-row{
+        grid-template-columns:1fr 42px;
+      }
+      .contact-row input:nth-child(2){
+        grid-column:1 / 2;
+      }
+      .contact-row .icon-btn{
+        grid-column:2;
+        grid-row:1 / span 2;
+        height:92px;
+      }
+      .actions{grid-template-columns:1fr}
+      .output-actions{grid-template-columns:1fr}
+    }
+  </style>
+</head>
+
+<body>
+  <main class="app">
+    <div class="header">
+      <div>
+        <h1>Terminplaner</h1>
+        <div class="sub">Eingaben werden automatisch auf diesem Gerät gespeichert.</div>
+      </div>
+    </div>
+
+    <section class="card">
+      <div class="section-head">
+        <div class="fixed-title">*Termin:*</div>
+      </div>
+      <textarea id="termin" placeholder="z. B. BMW Werk Irlbach"></textarea>
+    </section>
+
+    <section class="card map-section" data-key="lotsenpunkt">
+      <div class="section-head">
+        <div class="fixed-title">*Lotsenpunkt:*</div>
+      </div>
+      <label>Google-Maps-Punkt</label>
+      <input class="map-url" type="url" inputmode="url" placeholder="https://maps.app.goo.gl/…" />
+      <label>Kommentar</label>
+      <textarea class="map-comment" placeholder="Zusätzliche Hinweise …"></textarea>
+    </section>
+
+    <section class="card map-section" data-key="ausstieg">
+      <div class="section-head">
+        <div class="fixed-title">*Ausstieg:*</div>
+      </div>
+      <label>Google-Maps-Punkt</label>
+      <input class="map-url" type="url" inputmode="url" placeholder="https://maps.app.goo.gl/…" />
+      <label>Kommentar</label>
+      <textarea class="map-comment" placeholder="Zusätzliche Hinweise …"></textarea>
+    </section>
+
+    <section class="card">
+      <div class="section-head">
+        <div class="fixed-title">*Ablauf:*</div>
+      </div>
+      <textarea id="ablauf" placeholder="Ablauf eintragen …"></textarea>
+    </section>
+
+    <section class="card map-section" data-key="abfahrt">
+      <div class="section-head">
+        <div class="fixed-title">*Abfahrt:*</div>
+      </div>
+      <label>Google-Maps-Punkt</label>
+      <input class="map-url" type="url" inputmode="url" placeholder="https://maps.app.goo.gl/…" />
+      <label>Kommentar</label>
+      <textarea class="map-comment" placeholder="Zusätzliche Hinweise …"></textarea>
+    </section>
+
+    <section class="card">
+      <div class="section-head">
+        <div class="fixed-title">*Sicherheit:*</div>
+        <button class="plus-btn" type="button" id="addSecurity" aria-label="Sicherheitspunkt hinzufügen">+</button>
+      </div>
+      <div id="securityList" class="list"></div>
+      <div class="hint">Mit + beliebig viele Punkte hinzufügen.</div>
+    </section>
+
+    <section class="card map-section" data-key="evak">
+      <div class="section-head">
+        <div class="fixed-title">*EVAK:*</div>
+      </div>
+      <label>Google-Maps-Punkt</label>
+      <input class="map-url" type="url" inputmode="url" placeholder="https://maps.app.goo.gl/…" />
+      <label>Kommentar</label>
+      <textarea class="map-comment" placeholder="z. B. Bühne"></textarea>
+    </section>
+
+    <section class="card">
+      <div class="section-head">
+        <div class="fixed-title">*Sonstiges:*</div>
+        <button class="plus-btn" type="button" id="addOther" aria-label="Punkt hinzufügen">+</button>
+      </div>
+      <div id="otherList" class="list"></div>
+      <div class="hint">Mit + beliebig viele Punkte hinzufügen.</div>
+    </section>
+
+    <section class="card">
+      <div class="section-head">
+        <div class="fixed-title">*Ansprechpartner:*</div>
+        <button class="plus-btn" type="button" id="addContact" aria-label="Ansprechpartner hinzufügen">+</button>
+      </div>
+      <div id="contactList" class="list"></div>
+      <div class="hint">Name und Telefonnummer können beliebig oft ergänzt werden.</div>
+    </section>
+
+    <div class="actions">
+      <button class="main secondary" type="button" id="resetBtn">Alles leeren</button>
+      <button class="main primary" type="button" id="generateBtn">Text erstellen</button>
+    </div>
+
+    <section class="card output-wrap" id="outputWrap">
+      <div class="section-head">
+        <div class="fixed-title">Fertiger Text</div>
+      </div>
+      <textarea id="output" class="output" readonly></textarea>
+      <div class="output-actions">
+        <button class="main primary" type="button" id="shareBtn">In Nachrichten-App teilen</button>
+        <button class="main secondary" type="button" id="copyBtn">Kopieren</button>
+        <button class="main secondary" type="button" id="closeOutputBtn">Schließen</button>
+      </div>
+    </section>
+  </main>
+
+  <div class="toast" id="toast">Kopiert</div>
+
+<script>
+(() => {
+  const STORAGE_KEY = "terminplaner_v1";
+
+  const $ = (sel, root=document) => root.querySelector(sel);
+  const $$ = (sel, root=document) => [...root.querySelectorAll(sel)];
+
+  function makeListRow(value = "") {
+    const row = document.createElement("div");
+    row.className = "list-row";
+    row.innerHTML = `
+      <input type="text" class="list-input" placeholder="Punkt eintragen …" value="${escapeAttr(value)}">
+      <button type="button" class="icon-btn" aria-label="Eintrag löschen">−</button>
+    `;
+    $(".icon-btn", row).addEventListener("click", () => {
+      row.remove();
+      save();
+    });
+    $(".list-input", row).addEventListener("input", save);
+    return row;
+  }
+
+  function makeContactRow(name = "", phone = "") {
+    const row = document.createElement("div");
+    row.className = "contact-row";
+    row.innerHTML = `
+      <input type="text" class="contact-name" placeholder="Name / Funktion" value="${escapeAttr(name)}">
+      <input type="tel" class="contact-phone" inputmode="tel" placeholder="Telefonnummer" value="${escapeAttr(phone)}">
+      <button type="button" class="icon-btn" aria-label="Ansprechpartner löschen">−</button>
+    `;
+    $(".icon-btn", row).addEventListener("click", () => {
+      row.remove();
+      save();
+    });
+    $$(".contact-name, .contact-phone", row).forEach(el => el.addEventListener("input", save));
+    return row;
+  }
+
+  function escapeAttr(str=""){
+    return String(str)
+      .replaceAll("&","&amp;")
+      .replaceAll('"',"&quot;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;");
+  }
+
+  function addSecurity(value=""){
+    $("#securityList").appendChild(makeListRow(value));
+    save();
+  }
+
+  function addOther(value=""){
+    $("#otherList").appendChild(makeListRow(value));
+    save();
+  }
+
+  function addContact(name="", phone=""){
+    $("#contactList").appendChild(makeContactRow(name, phone));
+    save();
+  }
+
+  $("#addSecurity").addEventListener("click", () => addSecurity());
+  $("#addOther").addEventListener("click", () => addOther());
+  $("#addContact").addEventListener("click", () => addContact());
+
+  ["termin","ablauf"].forEach(id => $("#"+id).addEventListener("input", save));
+  $$(".map-url, .map-comment").forEach(el => el.addEventListener("input", save));
+
+  function getMapData(key){
+    const sec = $(`.map-section[data-key="${key}"]`);
+    return {
+      url: $(".map-url", sec).value.trim(),
+      comment: $(".map-comment", sec).value.trim()
+    };
+  }
+
+  function setMapData(key, data={}){
+    const sec = $(`.map-section[data-key="${key}"]`);
+    $(".map-url", sec).value = data.url || "";
+    $(".map-comment", sec).value = data.comment || "";
+  }
+
+  function listValues(container){
+    return $$(".list-input", $(container))
+      .map(i => i.value.trim())
+      .filter(Boolean);
+  }
+
+  function contactValues(){
+    return $$(".contact-row", $("#contactList"))
+      .map(row => ({
+        name: $(".contact-name", row).value.trim(),
+        phone: $(".contact-phone", row).value.trim()
+      }))
+      .filter(x => x.name || x.phone);
+  }
+
+  function snapshot(){
+    return {
+      termin: $("#termin").value,
+      lotsenpunkt: getMapData("lotsenpunkt"),
+      ausstieg: getMapData("ausstieg"),
+      ablauf: $("#ablauf").value,
+      abfahrt: getMapData("abfahrt"),
+      sicherheit: listValues("#securityList"),
+      evak: getMapData("evak"),
+      sonstiges: listValues("#otherList"),
+      ansprechpartner: contactValues()
+    };
+  }
+
+  function save(){
+    try{
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot()));
+    }catch(e){}
+  }
+
+  function restore(){
+    let data;
+    try{
+      data = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
+    }catch(e){ data = null; }
+
+    $("#securityList").innerHTML = "";
+    $("#otherList").innerHTML = "";
+    $("#contactList").innerHTML = "";
+
+    if(!data){
+      addSecurity();
+      addOther();
+      addContact();
+      return;
+    }
+
+    $("#termin").value = data.termin || "";
+    $("#ablauf").value = data.ablauf || "";
+    setMapData("lotsenpunkt", data.lotsenpunkt);
+    setMapData("ausstieg", data.ausstieg);
+    setMapData("abfahrt", data.abfahrt);
+    setMapData("evak", data.evak);
+
+    (data.sicherheit?.length ? data.sicherheit : [""]).forEach(addSecurity);
+    (data.sonstiges?.length ? data.sonstiges : [""]).forEach(addOther);
+    (data.ansprechpartner?.length ? data.ansprechpartner : [{name:"",phone:""}])
+      .forEach(c => addContact(c.name, c.phone));
+  }
+
+  function appendSection(lines, title, values){
+    lines.push(`*${title}:*`);
+    if(Array.isArray(values)){
+      values.filter(Boolean).forEach(v => lines.push(v));
+    }else if(values){
+      lines.push(values);
+    }
+    lines.push("");
+  }
+
+  function appendMap(lines, title, obj){
+    lines.push(`*${title}:*`);
+    if(obj.url) lines.push(obj.url);
+    if(obj.comment) lines.push(obj.comment);
+    lines.push("");
+  }
+
+  function generateText(){
+    const d = snapshot();
+    const lines = [];
+
+    appendSection(lines, "Termin", d.termin.trim());
+    appendMap(lines, "Lotsenpunkt", d.lotsenpunkt);
+    appendMap(lines, "Ausstieg", d.ausstieg);
+    appendSection(lines, "Ablauf", d.ablauf.trim());
+    appendMap(lines, "Abfahrt", d.abfahrt);
+
+    lines.push("*Sicherheit:*");
+    d.sicherheit.forEach(v => lines.push(`- ${v}`));
+    lines.push("");
+
+    appendMap(lines, "EVAK", d.evak);
+
+    lines.push("*Sonstiges:*");
+    d.sonstiges.forEach(v => lines.push(`- ${v}`));
+    lines.push("");
+
+    lines.push("*Ansprechpartner:*");
+    d.ansprechpartner.forEach((c, idx) => {
+      if(c.name) lines.push(c.name);
+      if(c.phone) lines.push(c.phone);
+      if(idx < d.ansprechpartner.length - 1) lines.push("");
+    });
+
+    return lines.join("\n").replace(/\n{3,}/g, "\n\n").trim();
+  }
+
+  $("#generateBtn").addEventListener("click", () => {
+    $("#output").value = generateText();
+    $("#outputWrap").classList.add("show");
+    $("#outputWrap").scrollIntoView({behavior:"smooth", block:"start"});
+  });
+
+  $("#closeOutputBtn").addEventListener("click", () => {
+    $("#outputWrap").classList.remove("show");
+  });
+
+  $("#shareBtn").addEventListener("click", async () => {
+    const text = $("#output").value || generateText();
+
+    if(navigator.share){
+      try{
+        await navigator.share({
+          title: "Terminbericht",
+          text
+        });
+        return;
+      }catch(e){
+        if(e && e.name === "AbortError") return;
+      }
+    }
+
+    try{
+      await navigator.clipboard.writeText(text);
+      showToast("Bericht kopiert – jetzt in der Nachrichten-App einfügen");
+    }catch(e){
+      $("#output").value = text;
+      $("#output").focus();
+      $("#output").select();
+      document.execCommand("copy");
+      showToast("Bericht kopiert");
+    }
+  });
+
+  $("#copyBtn").addEventListener("click", async () => {
+    const text = $("#output").value || generateText();
+    try{
+      await navigator.clipboard.writeText(text);
+    }catch(e){
+      $("#output").value = text;
+      $("#output").focus();
+      $("#output").select();
+      document.execCommand("copy");
+    }
+    showToast("Kopiert");
+  });
+
+  $("#resetBtn").addEventListener("click", () => {
+    if(!confirm("Wirklich alle Eingaben löschen?")) return;
+    localStorage.removeItem(STORAGE_KEY);
+
+    $("#termin").value = "";
+    $("#ablauf").value = "";
+    ["lotsenpunkt","ausstieg","abfahrt","evak"].forEach(k => setMapData(k, {}));
+
+    $("#securityList").innerHTML = "";
+    $("#otherList").innerHTML = "";
+    $("#contactList").innerHTML = "";
+
+    addSecurity();
+    addOther();
+    addContact();
+
+    $("#output").value = "";
+    $("#outputWrap").classList.remove("show");
+    save();
+  });
+
+  function showToast(text){
+    const el = $("#toast");
+    el.textContent = text;
+    el.classList.add("show");
+    clearTimeout(showToast._t);
+    showToast._t = setTimeout(() => el.classList.remove("show"), 1600);
+  }
+
+  restore();
+})();
+</script>
+</body>
+</html>
